@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -36,7 +37,6 @@ import { TherapistDetailsModal } from '@/components/admin/TherapistDetailsModal'
 import { TherapistAppointmentsModal } from '@/components/admin/TherapistAppointmentsModal';
 import { TherapistEarningsModal } from '@/components/admin/TherapistEarningsModal';
 import { SendEmailModal } from '@/components/admin/SendEmailModal';
-import TherapistListing from '../TherapistListing';
 
 interface TherapistAdmin {
   id: string;
@@ -63,25 +63,6 @@ interface TherapistAdmin {
   session_formats?: string[];
   is_community_therapist?: boolean;
   availability?: any;
-  therapist_details?: {
-    license_number?: string;
-    license_type?: string;
-    therapy_approaches?: string[];
-    languages?: string[];
-    application_status?: string;
-    is_verified?: boolean;
-    preferred_currency?: string;
-    bio?: string;
-    specialization?: string;
-    years_experience?: number;
-    hourly_rate?: number;
-    rating?: number;
-    has_insurance?: boolean;
-    insurance_info?: string;
-    session_formats?: string[];
-    is_community_therapist?: boolean;
-    availability?: any;
-  };
 }
 
 const AdminTherapists = () => {
@@ -107,14 +88,6 @@ const AdminTherapists = () => {
 
   const fetchTherapists = async () => {
     try {
-      // Fetch therapist profiles
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('role', 'therapist');
-
-      if (profilesError) throw profilesError;
-
       // Fetch therapist data
       const { data: therapistData, error: therapistError } = await supabase
         .from('therapists')
@@ -122,17 +95,7 @@ const AdminTherapists = () => {
 
       if (therapistError) throw therapistError;
 
-      // Combine all data - therapist data now contains all details
-      const combinedData = profilesData.map(profile => {
-        const therapistInfo = therapistData.find(t => t.id === profile.id);
-        
-        return {
-          ...profile,
-          ...therapistInfo
-        };
-      });
-
-      setTherapists(combinedData);
+      setTherapists(therapistData);
     } catch (error) {
       console.error('Error fetching therapists:', error);
       toast({
@@ -149,23 +112,23 @@ const AdminTherapists = () => {
     let filtered = therapists;
 
     if (searchTerm) {
-      filtered = filtered.filter(therapists =>
-        therapists.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        therapists.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        therapists.specialization?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        therapists.location?.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(therapist =>
+        therapist.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        therapist.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        therapist.specialization?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        therapist.location?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     if (statusFilter !== 'all') {
-      filtered = filtered.filter(therapists => {
+      filtered = filtered.filter(therapist => {
         switch (statusFilter) {
           case 'verified':
-            return therapists.is_verified;
+            return therapist.is_verified;
           case 'pending':
-            return therapists.application_status === 'pending';
+            return therapist.application_status === 'pending';
           case 'active':
-            return therapists.is_verified && therapists.license_number;
+            return therapist.is_verified && therapist.license_number;
           default:
             return true;
         }
@@ -176,9 +139,9 @@ const AdminTherapists = () => {
   };
 
   const getStatusBadge = (therapist: TherapistAdmin) => {
-    if (therapist.therapist_details?.is_verified) {
+    if (therapist.is_verified) {
       return <Badge variant="default" className="bg-green-100 text-green-800">Verified</Badge>;
-    } else if (therapist.therapist_details?.application_status === 'pending') {
+    } else if (therapist.application_status === 'pending') {
       return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Pending</Badge>;
     } else {
       return <Badge variant="outline" className="bg-red-100 text-red-800">Unverified</Badge>;
@@ -197,12 +160,19 @@ const AdminTherapists = () => {
 
       if (error) throw error;
 
+      // Update local state
+      setTherapists(prevState =>
+        prevState.map(therapist => 
+          therapist.id === therapistId 
+            ? { ...therapist, is_verified: isVerified, application_status: isVerified ? 'approved' : 'rejected' } 
+            : therapist
+        )
+      );
+
       toast({
         title: "Success",
         description: `Therapist ${isVerified ? 'verified' : 'unverified'} successfully.`,
       });
-
-      fetchTherapists();
     } catch (error) {
       console.error('Error updating therapist status:', error);
       toast({
@@ -261,7 +231,7 @@ const AdminTherapists = () => {
     return (
       <div className="container mx-auto py-8">
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-spacing-2 border-primary"></div>
         </div>
       </div>
     );
@@ -303,7 +273,7 @@ const AdminTherapists = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {therapists.filter(t => t.therapist_details?.is_verified).length}
+              {therapists.filter(t => t.is_verified).length}
             </div>
             <p className="text-xs text-muted-foreground">Active & verified</p>
           </CardContent>
@@ -316,7 +286,7 @@ const AdminTherapists = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {therapists.filter(t => t.therapist_details?.application_status === 'pending').length}
+              {therapists.filter(t => t.application_status === 'pending').length}
             </div>
             <p className="text-xs text-muted-foreground">Awaiting verification</p>
           </CardContent>
@@ -422,14 +392,14 @@ const AdminTherapists = () => {
                         <div className="flex items-center gap-1">
                           <DollarSign className="h-3 w-3" />
                           <span>
-                            {therapist.hourly_rate === 0 ? 'Free' : `${therapist.hourly_rate} ${therapist.preferred_currency || therapist.therapist_details?.preferred_currency || 'NGN'}`}
+                            {therapist.hourly_rate === 0 ? 'Free' : `${therapist.hourly_rate} ${therapist.preferred_currency || 'NGN'}`}
                           </span>
                         </div>
                       )}
                     </div>
-                    {therapist.therapist_details?.license_type && (
+                    {therapist.license_type && (
                       <p className="text-sm text-muted-foreground">
-                        <strong>License:</strong> {therapist.therapist_details.license_type} - {therapist.therapist_details.license_number}
+                        <strong>License:</strong> {therapist.license_type} - {therapist.license_number}
                       </p>
                     )}
                   </div>
@@ -445,7 +415,7 @@ const AdminTherapists = () => {
                     View Details
                   </Button>
                   
-                  {!therapist.therapist_details?.is_verified && (
+                  {!therapist.is_verified && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -479,7 +449,7 @@ const AdminTherapists = () => {
                         View Earnings
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      {therapist.therapist_details?.is_verified ? (
+                      {therapist.is_verified ? (
                         <DropdownMenuItem 
                           className="text-red-600"
                           onClick={() => updateTherapistStatus(therapist.id, false)}
@@ -510,6 +480,7 @@ const AdminTherapists = () => {
       </Card>
 
       {/* Modals */}
+      
       <TherapistDetailsModal
         therapist={selectedTherapist}
         isOpen={isModalOpen}

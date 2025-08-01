@@ -9,6 +9,7 @@ import Layout from "@/components/layout/Layout";
 import ClientLayout from "@/components/layout/ClientLayout";
 import TherapistLayout from "@/components/layout/TherapistLayout";
 import FriendLayout from "@/components/layout/FriendLayout";
+import JoinCall from "@/components/video/room";
 
 // Import pages
 import Index from "./pages/Index";
@@ -135,6 +136,7 @@ const App = () => (
                 
                 {/* Chat and video routes */}
                 <Route path="video/:appointmentId" element={<VideoChat />} />
+                <Route path="/video/room/:roomName" element={<JoinCall />} />
                 <Route path="chat/:friendId" element={<ChatPage />} />
                 
                 {/* AI Matching routes */}
