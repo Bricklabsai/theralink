@@ -7,6 +7,7 @@ import { Upload, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 const TherapistProfileImageUpload = () => {
   const { user, profile, refreshProfile } = useAuth();
@@ -22,14 +23,50 @@ const TherapistProfileImageUpload = () => {
       }
 
       const file = event.target.files[0];
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user?.id}/avatar.${fileExt}`;
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        throw new Error('File size must be less than 5MB');
+      }
+
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        throw new Error('Please select a valid image file');
+      }
+
+      const fileExt = file.name.split('.').pop()?.toLowerCase();
+      const allowedTypes = ['jpg', 'jpeg', 'png', 'webp'];
+      
+      if (!fileExt || !allowedTypes.includes(fileExt)) {
+        throw new Error('Please select a JPG, PNG, or WebP image');
+      }
+
+      const fileName = `${user?.id}/avatar-${Date.now()}.${fileExt}`;
       const filePath = fileName;
 
-      // Upload file to Supabase Storage
+      // Delete old avatar if exists
+      try {
+        const { data: existingFiles } = await supabase.storage
+          .from('avatars')
+          .list(user?.id || '', { limit: 100 });
+        
+        if (existingFiles && existingFiles.length > 0) {
+          const filesToDelete = existingFiles.map(file => `${user?.id}/${file.name}`);
+          await supabase.storage
+            .from('avatars')
+            .remove(filesToDelete);
+        }
+      } catch (cleanupError) {
+        console.warn('Could not clean up old files:', cleanupError);
+      }
+
+      // Upload new file
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, file, { 
+          cacheControl: '3600',
+          upsert: false 
+        });
 
       if (uploadError) {
         throw uploadError;
@@ -57,9 +94,10 @@ const TherapistProfileImageUpload = () => {
         description: "Profile image updated successfully!",
       });
     } catch (error: any) {
+      console.error('Image upload error:', error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to upload image",
         variant: "destructive",
       });
     } finally {
@@ -85,9 +123,19 @@ const TherapistProfileImageUpload = () => {
               variant="outline"
               disabled={uploading}
               onClick={() => document.getElementById('therapist-profile-image-upload')?.click()}
+              className="relative"
             >
-              <Upload className="h-4 w-4 mr-2" />
-              {uploading ? "Uploading..." : "Upload Image"}
+              {uploading ? (
+                <>
+                  <LoadingSpinner size="sm" className="mr-2" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload Image
+                </>
+              )}
             </Button>
             <input
               id="therapist-profile-image-upload"
@@ -99,7 +147,7 @@ const TherapistProfileImageUpload = () => {
           </div>
         </div>
         <p className="text-sm text-muted-foreground">
-          Upload a professional photo to help clients connect with you.
+          Upload a professional photo to help clients connect with you. Max size: 5MB. Formats: JPG, PNG, WebP.
         </p>
       </CardContent>
     </Card>

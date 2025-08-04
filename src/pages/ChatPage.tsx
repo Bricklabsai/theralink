@@ -70,7 +70,7 @@ const ChatPage = () => {
           .from("messages")
           .select("*")
           .or(
-            `and(sender_id.eq.${currentUser.id},receiver_id.eq.${therapistId}),and(sender_id.eq.${therapistId},receiver_id.eq.${currentUser.id})`
+            `and(sender_id.eq.${user?.id},receiver_id.eq.${therapistId}),and(sender_id.eq.${therapistId},receiver_id.eq.${user?.id})`
           )
           .order("timestamp", { ascending: true });
 
@@ -95,7 +95,7 @@ const ChatPage = () => {
     if (!inputMessage.trim()) return;
 
     const message = {
-      sender_id: currentUser.id,
+      sender_id: user?.id,
       receiver_id: therapistId,
       content: inputMessage,
       timestamp: new Date().toISOString(),

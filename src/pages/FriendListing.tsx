@@ -7,7 +7,7 @@ import { Friend, FriendDetails, FriendWithDetails } from "@/types/friend";
 import { BookingModal } from "@/components/booking/BookingModal";
 
 const FriendListing = () => {
-  const [friends, setFriends] = useState<FriendWithDetails[]>([]);
+  const [friends, setFriends] = useState<FriendListingData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedFriend, setSelectedFriend] = useState<any>(null);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
