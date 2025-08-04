@@ -90,15 +90,21 @@ export const TherapistBookings = () => {
 
       if (error) throw error;
 
-      await supabase.from("notifications").insert([
-  {
-    user_id: receiverId,
-    type: "message",
-    message: `New message from ${user.full_name}`,
-    read: false,
-    created_at: new Date(),
-  },
-]);
+      // Create notification for client about cancellation
+      const appointment = appointments.find(a => a.id === appointmentId);
+      if (appointment) {
+        await supabase.from("notifications").insert([
+          {
+            id: crypto.randomUUID(),
+            user_id: appointment.client_id,
+            type: "appointment_cancelled",
+            title: "Appointment Cancelled",
+            message: "Your therapist has cancelled the appointment.",
+            is_read: false,
+            created_at: new Date().toISOString(),
+          },
+        ]);
+      }
 
       toast({
         title: "Appointment cancelled",

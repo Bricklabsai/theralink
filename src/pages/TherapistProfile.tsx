@@ -36,22 +36,22 @@ const TherapistProfile = () => {
   
   interface Therapist {
     id: string;
-    user_id: string; // Add this line to ensure we have the user_id
-    full_name: string;
+    user_id?: string;
+    full_name?: string;
     profile_image_url?: string;
     role?: string;
     location?: string;
     email?: string;
     hourly_rate?: number;
-    availability?: { date: string; slots: string[] }[];
+    availability?: any;
     specialization?: string;
     years_experience?: number;
     rating?: number;
     bio?: string;
     license_type?: string;
-    therapy_approaches?: string;
+    therapy_approaches?: string[] | string;
     languages?: string[];
-    session_formats?: string;
+    session_formats?: string[] | string;
     is_verified?: boolean;
     education?: string;
   }
@@ -87,25 +87,28 @@ const TherapistProfile = () => {
         }
 
         // Then fetch profile data from profiles table using user_id
-       // Then fetch profile data from profiles table using user_id
-const { data: profileData, error: profileError } = await supabase
-  .from('profiles')
-  .select('*')
-  .eq('role', 'therapist')
-  .eq('id', id)
-  .single();
-
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('role', 'therapist')
+          .eq('id', therapistData.id)
+          .single();
 
         if (profileError) {
           console.error("Error fetching profile:", profileError);
           // If profile fetch fails, use therapist data as fallback
-          setTherapist(therapistData);
+          setTherapist({
+            ...therapistData,
+            user_id: therapistData.id,
+            full_name: therapistData.bio || 'Therapist'
+          });
         } else {
           // Merge profile data with therapist data
           setTherapist({
             ...therapistData,
-            full_name: profileData?.full_name || therapistData.full_name,
-            profile_image_url: profileData?.avatar_url || therapistData.profile_image_url
+            user_id: therapistData.id,
+            full_name: profileData?.full_name || therapistData.bio || 'Therapist',
+            profile_image_url: profileData?.profile_image_url || null
           });
         }
 
@@ -347,13 +350,15 @@ const { data: profileData, error: profileError } = await supabase
     Available Days
   </h3>
   <div className="grid grid-cols-3 gap-2">
-    {therapist.availability && therapist.availability.length > 0 ? (
-      therapist.availability.map((dayObj) => {
-        const nextDate = getNextDateForDay(dayObj.day);
-        const formattedDate = format(nextDate, "yyyy-MM-dd"); // e.g. "2025-07-21"
+                     {therapist.availability && Array.isArray(therapist.availability) && therapist.availability.length > 0 ? (
+      therapist.availability.map((dayObj, index) => {
+        // Handle both old and new availability formats
+        const dayString = dayObj.day || dayObj.date || 'monday';
+        const nextDate = getNextDateForDay(dayString);
+        const formattedDate = format(nextDate, "yyyy-MM-dd");
         return (
           <Button
-            key={formattedDate}
+            key={`${formattedDate}-${index}`}
             variant={selectedDate === formattedDate ? "default" : "outline"}
             onClick={() => {
               setSelectedDate(formattedDate);
@@ -361,7 +366,7 @@ const { data: profileData, error: profileError } = await supabase
             }}
             className="text-xs"
           >
-            {format(nextDate, "MMM d")} {/* e.g. "Jul 21" */}
+            {format(nextDate, "MMM d")}
           </Button>
         );
       })

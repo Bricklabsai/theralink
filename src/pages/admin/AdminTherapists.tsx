@@ -88,14 +88,27 @@ const AdminTherapists = () => {
 
   const fetchTherapists = async () => {
     try {
-      // Fetch therapist data
+      // Fetch therapist data with profile information
       const { data: therapistData, error: therapistError } = await supabase
         .from('therapists')
-        .select('*');
+        .select(`
+          *,
+          profiles!inner(full_name, email, profile_image_url, phone, location)
+        `);
 
       if (therapistError) throw therapistError;
 
-      setTherapists(therapistData);
+      // Transform data to match TherapistAdmin interface
+      const transformedData = therapistData.map(therapist => ({
+        ...therapist,
+        full_name: therapist.profiles?.full_name || 'Unknown',
+        email: therapist.profiles?.email || '',
+        profile_image_url: therapist.profiles?.profile_image_url,
+        phone: therapist.profiles?.phone,
+        location: therapist.profiles?.location
+      }));
+
+      setTherapists(transformedData);
     } catch (error) {
       console.error('Error fetching therapists:', error);
       toast({

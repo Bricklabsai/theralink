@@ -354,25 +354,24 @@ const TherapistAppointments = () => {
                         </div>
                       </div>
                       <div className="mt-4 md:mt-0 flex items-center space-x-2">
-                      // In your TherapistAppointments component, modify the video button:
- {appointment.type === 'video' ? (
-  <Button 
-    variant="default" 
-    className="bg-thera-600 hover:bg-thera-700"
-    asChild
-  >
-    <Link to={`/video-chat/${appointment.id}`}>
-      <Video className="h-4 w-4 mr-2" /> 
-      {appointment.meeting_link ? 'Join Video' : 'Start Video Session'}
-    </Link>
-  </Button>
-) : (
-  <Button variant="default" className="bg-blue-600" asChild>
-    <Link to={`/chat/${appointment.id}`}>
-      <MessageSquare className="h-4 w-4 mr-2" /> Open Chat
-    </Link>
-  </Button>
-)}
+                        {appointment.type === 'video' ? (
+                          <Button 
+                            variant="default" 
+                            className="bg-thera-600 hover:bg-thera-700"
+                            asChild
+                          >
+                            <Link to={`/video-chat/${appointment.id}`}>
+                              <Video className="h-4 w-4 mr-2" /> 
+                              Start Video Session
+                            </Link>
+                          </Button>
+                        ) : (
+                          <Button variant="default" className="bg-blue-600" asChild>
+                            <Link to={`/chat/${appointment.id}`}>
+                              <MessageSquare className="h-4 w-4 mr-2" /> Open Chat
+                            </Link>
+                          </Button>
+                        )}
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="outline" size="icon">
