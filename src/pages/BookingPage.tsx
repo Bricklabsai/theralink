@@ -333,7 +333,7 @@ const handleBookSession = async () => {
                     ? 'bg-green-100 text-green-800' 
                     : 'bg-blue-100 text-blue-800'
                 }`}>
-                  {therapist.is_community_therapist ? 'Community Therapist' : `ksh${therapist.hourly_rate}/hr`}
+                  {therapist.is_community_therapist ? 'Community Therapist' : `KSH ${therapist.hourly_rate}/hr`}
                 </span>
               </div>
             </div>
@@ -355,7 +355,7 @@ const handleBookSession = async () => {
                   <Video className="h-6 w-6 mb-2" />
                   <span>Video Session</span>
                   <span className="text-sm text-muted-foreground">
-                    {therapist.is_community_therapist ? 'Free' : `ksh${therapist.hourly_rate}`}
+                    {therapist.is_community_therapist ? 'Free' : `KSH ${therapist.hourly_rate}`}
                   </span>
                 </button>
                 
@@ -370,7 +370,7 @@ const handleBookSession = async () => {
                   <MessageCircle className="h-6 w-6 mb-2" />
                   <span>Chat Session</span>
                   <span className="text-sm text-muted-foreground">
-                    {therapist.is_community_therapist ? 'Free' : `ksh${Math.round(therapist.hourly_rate * 0.7)}`}
+                    {therapist.is_community_therapist ? 'Free' : `KSH ${Math.round(therapist.hourly_rate * 0.7)}`}
                   </span>
                 </button>
               </div>

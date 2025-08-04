@@ -23,7 +23,7 @@ import {
   Smile,
   Video,
 } from "lucide-react";
-
+import { useAuth } from "@/contexts/AuthContext";
 
 
 const formatMessageDate = (timestamp: string) => {
@@ -46,6 +46,7 @@ const formatMessageDate = (timestamp: string) => {
 
 const ChatPage = () => {
   const { therapistId } = useParams<{ therapistId: string }>();
+  const { user } = useAuth();
   const [therapist, setTherapist] = useState<any | null>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [inputMessage, setInputMessage] = useState("");
@@ -193,7 +194,7 @@ const ChatPage = () => {
             </div>
 
             {messages.map((msg) => {
-              const isSelf = msg.sender_id === currentUser.id;
+              const isSelf = msg.sender_id === user?.id;
               return (
                 <div
                   key={msg.id}
