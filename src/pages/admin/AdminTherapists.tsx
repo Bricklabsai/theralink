@@ -153,11 +153,11 @@ const AdminTherapists = () => {
 
   const getStatusBadge = (therapist: TherapistAdmin) => {
     if (therapist.is_verified) {
-      return <Badge variant="default" className="bg-green-100 text-green-800">Verified</Badge>;
+      return <Badge variant="default" className="bg-green-500 text-white border-green-500">Verified</Badge>;
     } else if (therapist.application_status === 'pending') {
-      return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Pending</Badge>;
+      return <Badge variant="secondary" className="bg-yellow-500 text-white border-yellow-500">Pending</Badge>;
     } else {
-      return <Badge variant="outline" className="bg-red-100 text-red-800">Unverified</Badge>;
+      return <Badge variant="outline" className="bg-red-500 text-white border-red-500">Unverified</Badge>;
     }
   };
 
@@ -253,13 +253,13 @@ const AdminTherapists = () => {
   return (
     <div className="container mx-auto py-8 space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Therapist Management</h1>
-          <p className="text-muted-foreground">Manage therapists, verify credentials, and monitor activity</p>
+          <h1 className="text-2xl sm:text-3xl font-bold">Therapist Management</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">Manage therapists, verify credentials, and monitor activity</p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="flex items-center gap-1">
+          <Badge variant="outline" className="flex items-center gap-1 text-xs sm:text-sm">
             <UserCog className="h-3 w-3" />
             {therapists.length} Total Therapists
           </Badge>
@@ -356,76 +356,80 @@ const AdminTherapists = () => {
         <CardContent>
           <div className="space-y-4">
             {filteredTherapists.map((therapist) => (
-              <div key={therapist.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50">
-                <div className="flex items-center space-x-4">
-                  <Avatar className="h-12 w-12">
+              <div key={therapist.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg hover:bg-muted/50 space-y-4 sm:space-y-0">
+                <div className="flex items-start sm:items-center space-x-4 flex-1">
+                  <Avatar className="h-12 w-12 flex-shrink-0">
                     <AvatarImage src={therapist.profile_image_url} />
                     <AvatarFallback>
                       {therapist.full_name?.split(' ').map(n => n[0]).join('') || 'T'}
                     </AvatarFallback>
                   </Avatar>
                   
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-medium">{therapist.full_name || 'No name provided'}</h3>
-                      {getStatusBadge(therapist)}
-                      {therapist.rating && (
-                        <div className="flex items-center gap-1">
-                          <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                          <span className="text-sm text-muted-foreground">{therapist.rating.toFixed(1)}</span>
-                        </div>
-                      )}
+                  <div className="space-y-1 flex-1 min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                      <h3 className="font-medium text-sm sm:text-base truncate">{therapist.full_name || 'No name provided'}</h3>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {getStatusBadge(therapist)}
+                        {therapist.rating && (
+                          <div className="flex items-center gap-1">
+                            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                            <span className="text-sm text-muted-foreground">{therapist.rating.toFixed(1)}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Mail className="h-3 w-3" />
-                        {therapist.email}
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1 truncate">
+                        <Mail className="h-3 w-3 flex-shrink-0" />
+                        <span className="truncate">{therapist.email}</span>
                       </div>
                       {therapist.phone && (
                         <div className="flex items-center gap-1">
-                          <Phone className="h-3 w-3" />
-                          {therapist.phone}
+                          <Phone className="h-3 w-3 flex-shrink-0" />
+                          <span>{therapist.phone}</span>
                         </div>
                       )}
                       {therapist.location && (
                         <div className="flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          {therapist.location}
+                          <MapPin className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate">{therapist.location}</span>
                         </div>
                       )}
                     </div>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                       {therapist.specialization && (
-                        <span><strong>Specialization:</strong> {therapist.specialization}</span>
+                        <span className="truncate"><strong>Specialization:</strong> {therapist.specialization}</span>
                       )}
                       {therapist.years_experience && (
                         <span><strong>Experience:</strong> {therapist.years_experience} years</span>
                       )}
                       {(therapist.hourly_rate || therapist.hourly_rate === 0) && (
                         <div className="flex items-center gap-1">
-                          <DollarSign className="h-3 w-3" />
+                          <DollarSign className="h-3 w-3 flex-shrink-0" />
                           <span>
-                            {therapist.hourly_rate === 0 ? 'Free' : `${therapist.hourly_rate} ${therapist.preferred_currency || 'NGN'}`}
+                            {therapist.hourly_rate === 0 ? 'Free' : `${therapist.hourly_rate} ${therapist.preferred_currency || 'KSH'}`}
                           </span>
                         </div>
                       )}
                     </div>
                     {therapist.license_type && (
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">
                         <strong>License:</strong> {therapist.license_type} - {therapist.license_number}
                       </p>
                     )}
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-row sm:flex-col lg:flex-row items-center gap-2 sm:ml-4">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => openTherapistDetails(therapist)}
+                    className="text-xs sm:text-sm flex-1 sm:flex-none"
                   >
-                    <Eye className="h-4 w-4 mr-1" />
-                    View Details
+                    <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                    <span className="hidden sm:inline">View Details</span>
+                    <span className="sm:hidden">View</span>
                   </Button>
                   
                   {!therapist.is_verified && (
@@ -433,20 +437,20 @@ const AdminTherapists = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => updateTherapistStatus(therapist.id, true)}
-                      className="text-green-600 border-green-600 hover:bg-green-50"
+                      className="text-green-600 border-green-600 hover:bg-green-50 text-xs sm:text-sm flex-1 sm:flex-none"
                     >
-                      <CheckCircle className="h-4 w-4 mr-1" />
+                      <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                       Verify
                     </Button>
                   )}
                   
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" className="px-2">
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align="end" className="w-48">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => openTherapistDetails(therapist)}>
