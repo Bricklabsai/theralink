@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   AlertCircle, 
   MessageSquare, 
@@ -61,139 +62,131 @@ const AdminDashboard = () => {
     const fetchStats = async () => {
       setIsLoading(true);
       try {
-        // Count all users by role
-        const { count: usersCount } = await supabase
-          .from("profiles")
-          .select("*", { count: "exact", head: true });
-
-        const { count: therapistsCount } = await supabase
-          .from("profiles")
-          .select("*", { count: "exact", head: true })
-          .eq("role", "therapist");
+        // Execute all queries in parallel for faster loading
+        const [
+          profilesResult,
+          appointmentsResult,
+          transactionsResult,
+          sessionNotesResult,
+          feedbackResult,
+          contactMessagesResult,
+          reviewsResult,
+          therapistsResult,
+          friendsResult,
+          friendDetailsResult,
+          blogsResult
+        ] = await Promise.all([
+          // Get all profiles with role aggregation
+          supabase.from("profiles").select("role", { count: "exact" }),
           
-        const { count: friendsCount } = await supabase
-          .from("profiles")
-          .select("*", { count: "exact", head: true })
-          .eq("role", "friend");
-
-        const { count: clientsCount } = await supabase
-          .from("profiles")
-          .select("*", { count: "exact", head: true })
-          .eq("role", "client");
-
-        const { count: adminsCount } = await supabase
-          .from("profiles")
-          .select("*", { count: "exact", head: true })
-          .eq("role", "admin");
-
-        // Count appointments
-        const { count: appointmentsCount } = await supabase
-          .from("appointments")
-          .select("*", { count: "exact", head: true });
-
-        // Count completed appointments
-        const { count: completedAppointmentsCount } = await supabase
-          .from("appointments")
-          .select("*", { count: "exact", head: true })
-          .eq("status", "completed");
-
-        // Count cancelled appointments
-        const { count: cancelledAppointmentsCount } = await supabase
-          .from("appointments")
-          .select("*", { count: "exact", head: true })
-          .eq("status", "cancelled");
-
-        // Count transactions and get total revenue
-        const { count: transactionsCount, data: transactionData } = await supabase
-          .from("transactions")
-          .select("amount", { count: "exact" })
-          .eq("status", "success");
-
-        const totalRevenue = transactionData?.reduce((sum, transaction) => sum + Number(transaction.amount), 0) || 0;
+          // Get all appointments with status aggregation
+          supabase.from("appointments").select("status", { count: "exact" }),
           
-        // Count session notes
-        const { count: sessionNotesCount } = await supabase
-          .from("session_notes")
-          .select("*", { count: "exact", head: true });
+          // Get successful transactions with amounts
+          supabase.from("transactions").select("amount", { count: "exact" }).eq("status", "success"),
+          
+          // Get session notes count
+          supabase.from("session_notes").select("*", { count: "exact", head: true }),
+          
+          // Get feedback with read status
+          supabase.from("feedback").select("is_read", { count: "exact" }),
+          
+          // Get contact messages with read status
+          supabase.from("contact_messages").select("is_read", { count: "exact" }),
+          
+          // Get all reviews with ratings
+          supabase.from("reviews").select("rating", { count: "exact" }),
+          
+          // Get therapists with application status
+          supabase.from("therapists").select("application_status", { count: "exact" }),
+          
+          // Get all friends
+          supabase.from("profiles").select("id").eq("role", "friend"),
+          
+          // Get friend details
+          supabase.from("friend_details").select("friend_id"),
+          
+          // Get blogs with published status
+          supabase.from("blogs").select("published", { count: "exact" })
+        ]);
 
-        // Count unread feedback
-        const { count: unreadFeedbackCount } = await supabase
-          .from("feedback")
-          .select("*", { count: "exact", head: true })
-          .eq("is_read", false);
+        // Process profile data
+        const profileData = profilesResult.data || [];
+        const usersCount = profilesResult.count || 0;
+        const therapistsCount = profileData.filter(p => p.role === 'therapist').length;
+        const friendsCount = profileData.filter(p => p.role === 'friend').length;
+        const clientsCount = profileData.filter(p => p.role === 'client').length;
+        const adminsCount = profileData.filter(p => p.role === 'admin').length;
 
-        // Count unread contact messages
-        const { count: unreadMessagesCount } = await supabase
-          .from("contact_messages")
-          .select("*", { count: "exact", head: true })
-          .eq("is_read", false);
+        // Process appointments data
+        const appointmentData = appointmentsResult.data || [];
+        const appointmentsCount = appointmentsResult.count || 0;
+        const completedAppointmentsCount = appointmentData.filter(a => a.status === 'completed').length;
+        const cancelledAppointmentsCount = appointmentData.filter(a => a.status === 'cancelled').length;
 
-        // Count total contact messages
-        const { count: contactMessagesCount } = await supabase
-          .from("contact_messages")
-          .select("*", { count: "exact", head: true });
+        // Process transactions data
+        const transactionData = transactionsResult.data || [];
+        const transactionsCount = transactionsResult.count || 0;
+        const totalRevenue = transactionData.reduce((sum, transaction) => sum + Number(transaction.amount), 0);
 
-        // Count reviews and get average rating
-        const { count: reviewsCount, data: reviewData } = await supabase
-          .from("reviews")
-          .select("rating", { count: "exact" });
+        // Process session notes
+        const sessionNotesCount = sessionNotesResult.count || 0;
 
-        const averageRating = reviewData?.length > 0 
+        // Process feedback data
+        const feedbackData = feedbackResult.data || [];
+        const unreadFeedbackCount = feedbackData.filter(f => !f.is_read).length;
+
+        // Process contact messages data
+        const contactData = contactMessagesResult.data || [];
+        const contactMessagesCount = contactMessagesResult.count || 0;
+        const unreadMessagesCount = contactData.filter(c => !c.is_read).length;
+
+        // Process reviews data
+        const reviewData = reviewsResult.data || [];
+        const reviewsCount = reviewsResult.count || 0;
+        const averageRating = reviewData.length > 0 
           ? reviewData.reduce((sum, review) => sum + review.rating, 0) / reviewData.length 
           : 0;
 
-        // Count pending therapists
-        const { count: pendingTherapistsCount } = await supabase
-          .from("therapists")
-          .select("*", { count: "exact", head: true })
-          .or("application_status.is.null,application_status.eq.pending");
+        // Process therapists data
+        const therapistData = therapistsResult.data || [];
+        const pendingTherapistsCount = therapistData.filter(t => 
+          !t.application_status || t.application_status === 'pending'
+        ).length;
 
-        // Count pending friends (those without friend_details)
-        const { data: allFriends } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("role", "friend");
+        // Process friends data
+        const allFriends = friendsResult.data || [];
+        const friendsWithDetails = friendDetailsResult.data || [];
+        const friendsWithDetailsIds = friendsWithDetails.map(f => f.friend_id);
+        const pendingFriendsCount = allFriends.filter(f => !friendsWithDetailsIds.includes(f.id)).length;
 
-        const { data: friendsWithDetails } = await supabase
-          .from("friend_details")
-          .select("friend_id");
-
-        const friendsWithDetailsIds = friendsWithDetails?.map(f => f.friend_id) || [];
-        const pendingFriendsCount = allFriends?.filter(f => !friendsWithDetailsIds.includes(f.id)).length || 0;
-
-        // Count blogs
-        const { count: blogsCount } = await supabase
-          .from("blogs")
-          .select("*", { count: "exact", head: true });
-
-        // Count published blogs
-        const { count: publishedBlogsCount } = await supabase
-          .from("blogs")
-          .select("*", { count: "exact", head: true })
-          .eq("published", true);
+        // Process blogs data
+        const blogData = blogsResult.data || [];
+        const blogsCount = blogsResult.count || 0;
+        const publishedBlogsCount = blogData.filter(b => b.published).length;
 
         setStats({
-          users: usersCount || 0,
-          therapists: therapistsCount || 0,
-          friends: friendsCount || 0,
-          clients: clientsCount || 0,
-          admins: adminsCount || 0,
-          appointments: appointmentsCount || 0,
-          transactions: transactionsCount || 0,
-          sessionNotes: sessionNotesCount || 0,
-          unreadFeedback: unreadFeedbackCount || 0,
-          unreadMessages: unreadMessagesCount || 0,
-          reviews: reviewsCount || 0,
-          pendingTherapists: pendingTherapistsCount || 0,
+          users: usersCount,
+          therapists: therapistsCount,
+          friends: friendsCount,
+          clients: clientsCount,
+          admins: adminsCount,
+          appointments: appointmentsCount,
+          transactions: transactionsCount,
+          sessionNotes: sessionNotesCount,
+          unreadFeedback: unreadFeedbackCount,
+          unreadMessages: unreadMessagesCount,
+          reviews: reviewsCount,
+          pendingTherapists: pendingTherapistsCount,
           pendingFriends: pendingFriendsCount,
           totalRevenue: totalRevenue,
           averageRating: averageRating,
-          completedAppointments: completedAppointmentsCount || 0,
-          cancelledAppointments: cancelledAppointmentsCount || 0,
-          contactMessages: contactMessagesCount || 0,
-          unreadContactMessages: unreadMessagesCount || 0,
-          blogs: blogsCount || 0,
-          publishedBlogs: publishedBlogsCount || 0
+          completedAppointments: completedAppointmentsCount,
+          cancelledAppointments: cancelledAppointmentsCount,
+          contactMessages: contactMessagesCount,
+          unreadContactMessages: unreadMessagesCount,
+          blogs: blogsCount,
+          publishedBlogs: publishedBlogsCount
         });
       } catch (error) {
         console.error("Error fetching admin stats:", error);
@@ -206,7 +199,41 @@ const AdminDashboard = () => {
   }, []);
 
   if (isLoading) {
-    return <div className="p-10 text-center">Loading dashboard data...</div>;
+    return (
+      <div className="container max-w-7xl mx-auto p-6 space-y-8">
+        <div className="text-center space-y-4">
+          <Skeleton className="h-12 w-12 mx-auto rounded-xl" />
+          <Skeleton className="h-10 w-96 mx-auto" />
+          <Skeleton className="h-6 w-80 mx-auto" />
+        </div>
+        
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Card key={i}>
+              <CardHeader className="pb-2">
+                <Skeleton className="h-4 w-20" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-16" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <Card key={i}>
+              <CardHeader className="pb-2">
+                <Skeleton className="h-4 w-24" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-20" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   const pendingApprovals = stats.pendingTherapists + stats.pendingFriends;
