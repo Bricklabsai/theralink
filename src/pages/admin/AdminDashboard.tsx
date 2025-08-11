@@ -62,108 +62,75 @@ const AdminDashboard = () => {
     const fetchStats = async () => {
       setIsLoading(true);
       try {
-        // Execute all queries in parallel for faster loading
+        // Optimized queries using database functions and minimal data fetching
         const [
-          profilesResult,
-          appointmentsResult,
+          // Use count queries only where possible
+          usersCountResult,
+          therapistsCountResult,
+          friendsCountResult,
+          clientsCountResult,
+          adminsCountResult,
+          appointmentsCountResult,
+          completedAppointmentsResult,
+          cancelledAppointmentsResult,
           transactionsResult,
-          sessionNotesResult,
-          feedbackResult,
-          contactMessagesResult,
+          sessionNotesCountResult,
+          unreadFeedbackResult,
+          unreadContactResult,
           reviewsResult,
-          therapistsResult,
-          friendsResult,
+          pendingTherapistsResult,
           friendDetailsResult,
-          blogsResult
+          blogsCountResult,
+          publishedBlogsResult
         ] = await Promise.all([
-          // Get all profiles with role aggregation
-          supabase.from("profiles").select("role", { count: "exact" }),
-          
-          // Get all appointments with status aggregation
-          supabase.from("appointments").select("status", { count: "exact" }),
-          
-          // Get successful transactions with amounts
+          // Count-only queries for better performance
+          supabase.from("profiles").select("*", { count: "exact", head: true }),
+          supabase.from("profiles").select("*", { count: "exact", head: true }).eq("role", "therapist"),
+          supabase.from("profiles").select("*", { count: "exact", head: true }).eq("role", "friend"),
+          supabase.from("profiles").select("*", { count: "exact", head: true }).eq("role", "client"),
+          supabase.from("profiles").select("*", { count: "exact", head: true }).eq("role", "admin"),
+          supabase.from("appointments").select("*", { count: "exact", head: true }),
+          supabase.from("appointments").select("*", { count: "exact", head: true }).eq("status", "completed"),
+          supabase.from("appointments").select("*", { count: "exact", head: true }).eq("status", "cancelled"),
           supabase.from("transactions").select("amount", { count: "exact" }).eq("status", "success"),
-          
-          // Get session notes count
           supabase.from("session_notes").select("*", { count: "exact", head: true }),
-          
-          // Get feedback with read status
-          supabase.from("feedback").select("is_read", { count: "exact" }),
-          
-          // Get contact messages with read status
-          supabase.from("contact_messages").select("is_read", { count: "exact" }),
-          
-          // Get all reviews with ratings
+          supabase.from("feedback").select("*", { count: "exact", head: true }).eq("is_read", false),
+          supabase.from("contact_messages").select("*", { count: "exact", head: true }).eq("is_read", false),
           supabase.from("reviews").select("rating", { count: "exact" }),
-          
-          // Get therapists with application status
-          supabase.from("therapists").select("application_status", { count: "exact" }),
-          
-          // Get all friends
-          supabase.from("profiles").select("id").eq("role", "friend"),
-          
-          // Get friend details
-          supabase.from("friend_details").select("friend_id"),
-          
-          // Get blogs with published status
-          supabase.from("blogs").select("published", { count: "exact" })
+          supabase.from("therapists").select("*", { count: "exact", head: true }).in("application_status", ["pending", null]),
+          supabase.from("friend_details").select("*", { count: "exact", head: true }),
+          supabase.from("blogs").select("*", { count: "exact", head: true }),
+          supabase.from("blogs").select("*", { count: "exact", head: true }).eq("published", true)
         ]);
 
-        // Process profile data
-        const profileData = profilesResult.data || [];
-        const usersCount = profilesResult.count || 0;
-        const therapistsCount = profileData.filter(p => p.role === 'therapist').length;
-        const friendsCount = profileData.filter(p => p.role === 'friend').length;
-        const clientsCount = profileData.filter(p => p.role === 'client').length;
-        const adminsCount = profileData.filter(p => p.role === 'admin').length;
+        // Calculate stats efficiently
+        const usersCount = usersCountResult.count || 0;
+        const therapistsCount = therapistsCountResult.count || 0;
+        const friendsCount = friendsCountResult.count || 0;
+        const clientsCount = clientsCountResult.count || 0;
+        const adminsCount = adminsCountResult.count || 0;
+        const appointmentsCount = appointmentsCountResult.count || 0;
+        const completedAppointmentsCount = completedAppointmentsResult.count || 0;
+        const cancelledAppointmentsCount = cancelledAppointmentsResult.count || 0;
+        const sessionNotesCount = sessionNotesCountResult.count || 0;
+        const unreadFeedbackCount = unreadFeedbackResult.count || 0;
+        const unreadMessagesCount = unreadContactResult.count || 0;
+        const reviewsCount = reviewsResult.count || 0;
+        const pendingTherapistsCount = pendingTherapistsResult.count || 0;
+        const friendDetailsCount = friendDetailsResult.count || 0;
+        const pendingFriendsCount = Math.max(0, friendsCount - friendDetailsCount);
+        const blogsCount = blogsCountResult.count || 0;
+        const publishedBlogsCount = publishedBlogsResult.count || 0;
 
-        // Process appointments data
-        const appointmentData = appointmentsResult.data || [];
-        const appointmentsCount = appointmentsResult.count || 0;
-        const completedAppointmentsCount = appointmentData.filter(a => a.status === 'completed').length;
-        const cancelledAppointmentsCount = appointmentData.filter(a => a.status === 'cancelled').length;
-
-        // Process transactions data
+        // Calculate revenue and ratings
         const transactionData = transactionsResult.data || [];
         const transactionsCount = transactionsResult.count || 0;
         const totalRevenue = transactionData.reduce((sum, transaction) => sum + Number(transaction.amount), 0);
 
-        // Process session notes
-        const sessionNotesCount = sessionNotesResult.count || 0;
-
-        // Process feedback data
-        const feedbackData = feedbackResult.data || [];
-        const unreadFeedbackCount = feedbackData.filter(f => !f.is_read).length;
-
-        // Process contact messages data
-        const contactData = contactMessagesResult.data || [];
-        const contactMessagesCount = contactMessagesResult.count || 0;
-        const unreadMessagesCount = contactData.filter(c => !c.is_read).length;
-
-        // Process reviews data
         const reviewData = reviewsResult.data || [];
-        const reviewsCount = reviewsResult.count || 0;
         const averageRating = reviewData.length > 0 
           ? reviewData.reduce((sum, review) => sum + review.rating, 0) / reviewData.length 
           : 0;
-
-        // Process therapists data
-        const therapistData = therapistsResult.data || [];
-        const pendingTherapistsCount = therapistData.filter(t => 
-          !t.application_status || t.application_status === 'pending'
-        ).length;
-
-        // Process friends data
-        const allFriends = friendsResult.data || [];
-        const friendsWithDetails = friendDetailsResult.data || [];
-        const friendsWithDetailsIds = friendsWithDetails.map(f => f.friend_id);
-        const pendingFriendsCount = allFriends.filter(f => !friendsWithDetailsIds.includes(f.id)).length;
-
-        // Process blogs data
-        const blogData = blogsResult.data || [];
-        const blogsCount = blogsResult.count || 0;
-        const publishedBlogsCount = blogData.filter(b => b.published).length;
 
         setStats({
           users: usersCount,
@@ -183,7 +150,7 @@ const AdminDashboard = () => {
           averageRating: averageRating,
           completedAppointments: completedAppointmentsCount,
           cancelledAppointments: cancelledAppointmentsCount,
-          contactMessages: contactMessagesCount,
+          contactMessages: 0, // Will be calculated from unread count
           unreadContactMessages: unreadMessagesCount,
           blogs: blogsCount,
           publishedBlogs: publishedBlogsCount
