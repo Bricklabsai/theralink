@@ -206,8 +206,8 @@ const TherapistAppointments = () => {
             {view === "calendar" ? "List View" : "Calendar View"}
           </Button>
           <Button asChild>
-            <Link to="/therapist/appointments/new">
-              <CalendarIcon className="mr-2 h-4 w-4" /> New Appointment
+            <Link to="/therapist/bookings">
+              <CalendarIcon className="mr-2 h-4 w-4" /> View Booking Requests
             </Link>
           </Button>
         </div>
@@ -296,8 +296,8 @@ const TherapistAppointments = () => {
                   <h3 className="text-lg font-medium">No appointments scheduled</h3>
                   <p className="text-muted-foreground mt-1">You don't have any appointments for this day.</p>
                   <Button className="mt-4" asChild>
-                    <Link to="/therapist/appointments/new">
-                      Schedule an Appointment
+                    <Link to="/therapist/bookings">
+                      View Booking Requests
                     </Link>
                   </Button>
                 </div>

@@ -1,14 +1,16 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, MessageCircle, FileText, Calendar } from "lucide-react";
+import { Users, MessageCircle, FileText, Calendar, Video } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import FeedbackForm from "@/components/feedback/FeedbackForm";
 import { Progress } from "@/components/ui/progress";
+import { useNavigate } from "react-router-dom";
 
 const FriendDashboard = () => {
   const { profile, user } = useAuth();
+  const navigate = useNavigate();
 
   // Fetch friend's active clients/appointments
   const { data: clientStats } = useQuery({
@@ -90,7 +92,7 @@ const FriendDashboard = () => {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="shadow-md hover:shadow-xl transition-shadow duration-300">
+        <Card className="shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer" onClick={() => navigate('/friend/clients')}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-semibold text-primary">Active Clients</CardTitle>
             <Users className="h-5 w-5 text-primary" />
@@ -103,7 +105,7 @@ const FriendDashboard = () => {
             </p>
           </CardContent>
         </Card>
-        <Card className="shadow-md hover:shadow-xl transition-shadow duration-300">
+        <Card className="shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer" onClick={() => navigate('/friend/messages')}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-semibold text-secondary">New Messages</CardTitle>
             <MessageCircle className="h-5 w-5 text-secondary" />
@@ -161,8 +163,9 @@ const FriendDashboard = () => {
               </div>
             </div>
             <div className="mt-6 flex flex-wrap gap-3 justify-center">
-              <Button size="lg">View Clients</Button>
-              <Button size="lg" variant="outline">Update Profile</Button>
+              <Button size="lg" onClick={() => navigate('/friend/clients')}>View Clients</Button>
+              <Button size="lg" variant="outline" onClick={() => navigate('/friend/messages')}>Messages</Button>
+              <Button size="lg" variant="outline" onClick={() => navigate('/friend/account')}>Update Profile</Button>
             </div>
           </CardContent>
         </Card>

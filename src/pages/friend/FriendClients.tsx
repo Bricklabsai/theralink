@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Users as UsersIcon, Loader2, MessageCircle } from "lucide-react";
+import { Search, Users as UsersIcon, Loader2, MessageCircle, Video } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link } from "react-router-dom";
 
@@ -91,12 +91,20 @@ const FriendClients = () => {
                 </Avatar>
                 <h3 className="font-semibold text-lg">{client.full_name}</h3>
                 <p className="text-sm text-muted-foreground">{client.email}</p>
-                <Button asChild variant="outline" size="sm" className="mt-4">
-                  <Link to={`/friend/messages?clientId=${client.id}`}>
-                    <MessageCircle className="h-4 w-4 mr-2" />
-                    Message
-                  </Link>
-                </Button>
+                <div className="flex gap-2 mt-4">
+                  <Button asChild variant="outline" size="sm">
+                    <Link to={`/friend/messages?clientId=${client.id}`}>
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      Message
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" size="sm">
+                    <Link to={`/video-chat/${client.id}`}>
+                      <Video className="h-4 w-4 mr-2" />
+                      Video Call
+                    </Link>
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))}
