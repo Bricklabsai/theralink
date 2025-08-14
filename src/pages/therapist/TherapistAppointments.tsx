@@ -360,7 +360,7 @@ const TherapistAppointments = () => {
                             className="bg-thera-600 hover:bg-thera-700"
                             asChild
                           >
-                            <Link to={`/video-chat/${appointment.id}`}>
+                            <Link to={`/video/${appointment.id}`}>
                               <Video className="h-4 w-4 mr-2" /> 
                               Start Video Session
                             </Link>

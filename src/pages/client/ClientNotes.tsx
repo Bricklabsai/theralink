@@ -37,19 +37,21 @@ const ClientNotes = () => {
     const fetchNotes = async () => {
       setIsLoading(true);
       try {
-        const { data, error } = await supabase
-          .from('session_notes')
-          .select(`
-            id,
-            title,
-            content,
-            created_at,
-            therapist_id,
-            appointment_id,
-            profiles:therapist_id (full_name)
-          `)
-          .eq('client_id', user.id)
-          .order('created_at', { ascending: false });
+    const { data: profile } = await supabase
+  .from('profiles')
+  .select('id')
+  .eq('id', user.id) // Or eq('user_id', user.id) depending on schema
+  .single();
+
+const { data, error } = await supabase
+  .from('session_notes')
+  .select('*')
+  .eq('client_id', profile.id)
+  .order('created_at', { ascending: false });
+
+
+  
+
 
         if (error) throw error;
         setNotes(data || []);

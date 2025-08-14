@@ -99,7 +99,7 @@ const FriendClients = () => {
                     </Link>
                   </Button>
                   <Button asChild variant="outline" size="sm">
-                    <Link to={`/video-chat/${client.id}`}>
+                    <Link to={`/video/${client.id}`}>
                       <Video className="h-4 w-4 mr-2" />
                       Video Call
                     </Link>

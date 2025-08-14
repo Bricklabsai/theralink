@@ -48,15 +48,20 @@ const ContactPage = () => {
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    setIsSubmitting(true);
+const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  setIsSubmitting(true);
 
-    try {
-      // Use the contact_message edge function instead of direct RPC call
-      const response = await fetch("https://oavljdrqfzliikfncrdd.supabase.co/functions/v1/contact_message", {
+  try {
+    const token = await supabase.auth.getSession()
+      .then(({ data }) => data.session?.access_token);
+
+    const response = await fetch(
+      "https://oavljdrqfzliikfncrdd.supabase.co/functions/v1/contact_message",
+      {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
         body: JSON.stringify({
           name: values.name,
@@ -65,31 +70,32 @@ const ContactPage = () => {
           message: values.message,
           userId: user?.id || null
         })
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Failed to send message");
       }
+    );
 
-      form.reset();
-      
-      toast({
-        title: "Message Sent",
-        description: "Thank you for contacting us! We'll get back to you as soon as possible.",
-      });
-    } catch (error) {
-      console.error("Error submitting contact form:", error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "There was a problem sending your message. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || "Failed to send message");
     }
-  };
+
+    form.reset();
+    toast({
+      title: "Message Sent",
+      description: "Thank you for contacting us! We'll get back to you as soon as possible.",
+    });
+  } catch (error) {
+    console.error("Error submitting contact form:", error);
+    toast({
+      title: "Error",
+      description: error instanceof Error ? error.message : "There was a problem sending your message. Please try again.",
+      variant: "destructive",
+    });
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
 
   return (
     <div className="container mx-auto py-12 px-4 sm:px-6">

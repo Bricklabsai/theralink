@@ -40,7 +40,7 @@ const ClientOverview = () => {
             therapist_id
           `)
           .eq('client_id', user.id)
-          .eq('status', 'scheduled')
+          .eq('status', 'confirmed')
           .gte('start_time', new Date().toISOString())
           .order('start_time', { ascending: true })
           .limit(3);

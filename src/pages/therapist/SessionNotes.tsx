@@ -66,7 +66,7 @@ const SessionNotes = () => {
         .from('appointments')
         .select('*')
         .eq('therapist_id', user.id)
-        .eq('status', 'completed')
+        .eq('status', 'confirmed')
         .order('start_time', { ascending: false });
 
       if (appointmentsError) throw appointmentsError;

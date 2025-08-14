@@ -3,11 +3,11 @@ import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { Friend, FriendWithDetails, FriendListingData } from "@/types/friend";
+import { Friend, FriendDetails, FriendWithDetails } from "@/types/friend";
 import { BookingModal } from "@/components/booking/BookingModal";
 
 const FriendListing = () => {
-  const [friends, setFriends] = useState<FriendListingData[]>([]);
+  const [friends, setFriends] = useState<FriendWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedFriend, setSelectedFriend] = useState<any>(null);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
@@ -41,11 +41,9 @@ const FriendListing = () => {
         }
 
         // Transform the data to match our interface
-        const formattedFriends: FriendListingData[] = friendsData?.map(friend => ({
+        const formattedFriends: FriendWithDetails[] = friendsData?.map(friend => ({
           ...friend,
-          friend_details: Array.isArray(friend.friend_details) 
-            ? friend.friend_details[0] || { experience_description: '', area_of_experience: '', personal_story: '', communication_preferences: '' }
-            : friend.friend_details || { experience_description: '', area_of_experience: '', personal_story: '', communication_preferences: '' }
+          friend_details: Array.isArray(friend.friend_details) ? friend.friend_details[0] || null : friend.friend_details || null
         })) || [];
 
         setFriends(formattedFriends);
@@ -123,7 +121,7 @@ const FriendListing = () => {
                     </Link>
                   </Button>
                   <Button 
-                    onClick={() => handleBooking(friend as any)}
+                    onClick={() => handleBooking(friend)}
                     className="bg-primary hover:bg-primary/90"
                   >
                     Book Session
@@ -146,8 +144,8 @@ const FriendListing = () => {
           therapist={{
             id: selectedFriend.id,
             full_name: selectedFriend.full_name || 'Friend',
-            hourly_rate: 0,
-            is_community_therapist: true,
+            hourly_rate: 0, // Friends are typically free
+            is_community_therapist: true, // Friends are community-based
             preferred_currency: 'KSH'
           }}
         />
