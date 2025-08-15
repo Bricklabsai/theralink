@@ -20,17 +20,40 @@ function formatDate(date: string) {
 
 export default function FriendBookings() {
   const { user } = useAuth();
+
   const { data, isLoading } = useQuery({
     queryKey: ["friend-bookings", user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      const { data, error } = await supabase
+
+      // First fetch booking requests
+      const { data: bookings, error: bookingsError } = await supabase
         .from("booking_requests")
-        .select("*, client:client_id(*, profile:profiles(*))")
+        .select("*")
         .eq("therapist_id", user.id)
         .order("start_time", { ascending: false });
-      if (error) throw error;
-      return data || [];
+
+      if (bookingsError) throw bookingsError;
+      if (!bookings || bookings.length === 0) return [];
+
+      // Get all unique client IDs
+      const clientIds = [...new Set(bookings.map((b) => b.client_id))];
+
+      // Fetch all client profiles in one go
+      const { data: clients, error: clientsError } = await supabase
+        .from("profiles")
+        .select("*")
+        .in("id", clientIds);
+
+      if (clientsError) throw clientsError;
+
+      // Merge client data into bookings
+      const mergedData = bookings.map((booking) => ({
+        ...booking,
+        client: clients.find((c) => c.id === booking.client_id) || null,
+      }));
+
+      return mergedData;
     },
     enabled: !!user?.id,
   });
@@ -38,7 +61,6 @@ export default function FriendBookings() {
   const getInitials = (name: string) => {
     return name
       .split(" ")
-      .map((n) => n[0])
       .join("")
       .toUpperCase();
   };

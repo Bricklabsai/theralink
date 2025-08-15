@@ -26,32 +26,35 @@ import { useNavigate, useSearchParams } from "react-router-dom";
   ); // Target client
 
   // Fetch clients for the friend
-  const { data: clients = [] } = useQuery({
-    queryKey: ["friend-clients", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return [];
+  const { data: clientsRaw } = useQuery({
+  queryKey: ["friend-clients", user?.id],
+  queryFn: async () => {
+    if (!user?.id) return [];
 
-      const { data: appointments, error: apptError } = await supabase
-        .from("booking_requests")
-        .select("client_id")
-        .eq("therapist_id", user.id);
-      
-      if (apptError) throw apptError;
+    const { data: appointments, error: apptError } = await supabase
+      .from("booking_requests")
+      .select("client_id")
+      .eq("therapist_id", user.id);
 
-      const clientIds = [...new Set(appointments.map(a => a.client_id))];
+    if (apptError) throw apptError;
 
-      if (clientIds.length === 0) return [];
+    const clientIds = [...new Set(appointments.map(a => a.client_id))];
+    if (clientIds.length === 0) return [];
 
-      const { data: profiles, error: profileError } = await supabase
-        .from("profiles")
-        .select("*")
-        .in("id", clientIds);
+    const { data: profiles, error: profileError } = await supabase
+      .from("profiles")
+      .select("*")
+      .in("id", clientIds);
 
-      if (profileError) throw profileError;
-      return profiles || [];
-    },
-    enabled: !!user?.id,
-  });
+    if (profileError) throw profileError;
+    return profiles || [];
+  },
+  enabled: !!user?.id,
+});
+
+const clients = Array.isArray(clientsRaw) ? clientsRaw : [];
+
+
 
   // Fetch messages between this friend and the selected client
   const { data: messages = [], refetch, isLoading } = useQuery({
@@ -175,7 +178,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
                   variant="outline" 
                   size="sm" 
                   className="gap-2"
-                  onClick={() => navigate(`/video-chat/${selectedClientId}`)}
+                  onClick={() => navigate(`/video/${selectedClientId}`)}
                 >
                   <Video className="h-4 w-4" />
                   Video Call

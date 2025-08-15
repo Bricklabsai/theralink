@@ -37,20 +37,12 @@ const ClientNotes = () => {
     const fetchNotes = async () => {
       setIsLoading(true);
       try {
-    const { data: profile } = await supabase
-  .from('profiles')
-  .select('id')
-  .eq('id', user.id) // Or eq('user_id', user.id) depending on schema
-  .single();
-
-const { data, error } = await supabase
+        const { data, error } = await supabase
+         
   .from('session_notes')
   .select('*')
-  .eq('client_id', profile.id)
+  .eq('client_id', user.id)
   .order('created_at', { ascending: false });
-
-
-  
 
 
         if (error) throw error;

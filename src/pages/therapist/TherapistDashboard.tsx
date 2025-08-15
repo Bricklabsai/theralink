@@ -69,7 +69,7 @@ const TherapistDashboard = () => {
             client_id
           `)
           .eq('therapist_id', user.id)
-          .eq('status', 'scheduled')
+          .eq('status', 'confirmed')
           .gt('start_time', new Date().toISOString())
           .order('start_time', { ascending: true })
           .limit(5);

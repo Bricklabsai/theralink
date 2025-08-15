@@ -26,34 +26,26 @@ const FriendListing = () => {
         const { data: friendsData, error } = await supabase
           .from("profiles")
           .select(`
-            *,
-            friend_details:profiles (
-              experience_description,
-              area_of_experience,
-              personal_story,
-              communication_preferences
-    )
+            *
           `)
           .eq("role", "friend");
-
-        if (error) {
-          throw error;
-        }
-
-        // Transform the data to match our interface
-        const formattedFriends: FriendWithDetails[] = friendsData?.map(friend => ({
-          ...friend,
-          friend_details: Array.isArray(friend.friend_details) ? friend.friend_details[0] || null : friend.friend_details || null
-        })) || [];
-
-        setFriends(formattedFriends);
+        if (error) throw error;
+        const { data: detailsData } = await supabase
+          .from("friend_details")
+          .select("*");
+        const friendsWithDetails = friendsData.map((friend: Friend) => {
+          const details = detailsData.find((detail: FriendDetails) => detail.id === friend.id);
+          return {
+            ...friend,
+            friend_details: details || null,
+          };
+        });
+        setFriends(friendsWithDetails);
       } catch (error) {
-        console.error("Error fetching friends data:", error);
+        console.error("Error fetching friends:", error);
       }
-
       setLoading(false);
-    };
-
+    }
     fetchFriendsWithDetails();
   }, []);
 
