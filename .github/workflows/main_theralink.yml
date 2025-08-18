@@ -89,6 +89,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: vite-app
+          path: dist  
 
       - name: Install deployment dependencies
         run: cd dist && npm install --omit=dev
@@ -109,3 +110,4 @@ jobs:
           package: ./dist
 
           
+
