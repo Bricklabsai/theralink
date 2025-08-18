@@ -5,66 +5,48 @@ import { Calendar, Clock, AlertCircle, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
-import { BookingRequestCard } from "@/components/booking/BookingRequestCard";
 
 export const TherapistBookings = () => {
-  const [bookingRequests, setBookingRequests] = useState<any[]>([]);
   const [appointments, setAppointments] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   const { toast } = useToast();
   const { user } = useUser();
 
   useEffect(() => {
     if (user) {
-      fetchBookingRequests();
       fetchAppointments();
     }
   }, [user]);
 
-  const fetchBookingRequests = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('appointments')
-        .select(`
-          *,
-          profiles!booking_requests_client_id_fkey (
-            full_name,
-            email,
-            profile_image_url
-          )
-        `)
-        .eq('therapist_id', user?.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setBookingRequests(data || []);
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "Failed to fetch booking requests",
-        variant: "destructive",
-      });
-    }
-  };
-
   const fetchAppointments = async () => {
     try {
-      const { data, error } = await supabase
-        .from('appointments')
-        .select(`
-          *,
-          profiles!appointments_client_id_fkey (
-            full_name,
-            email,
-            profile_image_url
-          )
-        `)
-        .eq('therapist_id', user?.id)
-        .order('start_time', { ascending: true });
+      const { data: appointmentsData, error } = await supabase
+        .from("appointments")
+        .select("*")
+        .eq("therapist_id", user?.id)
+        .order("start_time", { ascending: true });
 
       if (error) throw error;
-      setAppointments(data || []);
+
+      // Attach client profiles
+      const withClients = await Promise.all(
+        (appointmentsData || []).map(async (appointment) => {
+          const { data: clientProfile, error: clientError } = await supabase
+            .from("profiles")
+            .select("full_name, email, profile_image_url")
+            .eq("id", appointment.client_id)
+            .single();
+
+          if (clientError) {
+            console.error("Error fetching client profile:", clientError);
+            return appointment;
+          }
+          return { ...appointment, client: clientProfile };
+        })
+      );
+
+      setAppointments(withClients);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -76,22 +58,16 @@ export const TherapistBookings = () => {
     }
   };
 
-  const handleUpdate = () => {
-    fetchBookingRequests();
-    fetchAppointments();
-  };
-
   const handleCancelAppointment = async (appointmentId: string) => {
     try {
       const { error } = await supabase
-        .from('appointments')
-        .update({ status: 'cancelled' })
-        .eq('id', appointmentId);
+        .from("appointments")
+        .update({ status: "cancelled" })
+        .eq("id", appointmentId);
 
       if (error) throw error;
 
-      // Create notification for client about cancellation
-      const appointment = appointments.find(a => a.id === appointmentId);
+      const appointment = appointments.find((a) => a.id === appointmentId);
       if (appointment) {
         await supabase.from("notifications").insert([
           {
@@ -110,8 +86,8 @@ export const TherapistBookings = () => {
         title: "Appointment cancelled",
         description: "The appointment has been cancelled and the client has been notified.",
       });
-      
-      handleUpdate();
+
+      fetchAppointments();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -135,9 +111,10 @@ export const TherapistBookings = () => {
     );
   }
 
-  const pendingRequests = bookingRequests.filter(req => req.status === 'pending');
-  const upcomingAppointments = appointments.filter(apt => 
-    apt.status === 'scheduled' && new Date(apt.start_time) > new Date()
+  // categorize appointments
+  const pendingRequests = appointments.filter((apt) => apt.status === "pending");
+  const upcomingAppointments = appointments.filter(
+    (apt) => apt.status === "confirmed" && new Date(apt.start_time) > new Date()
   );
 
   return (
@@ -206,6 +183,7 @@ export const TherapistBookings = () => {
           </TabsTrigger>
         </TabsList>
 
+        {/* Requests */}
         <TabsContent value="requests" className="space-y-6">
           {isLoading ? (
             <div className="space-y-4">
@@ -220,7 +198,7 @@ export const TherapistBookings = () => {
                 </Card>
               ))}
             </div>
-          ) : bookingRequests.length === 0 ? (
+          ) : pendingRequests.length === 0 ? (
             <Card>
               <CardContent className="p-8 text-center">
                 <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -232,18 +210,24 @@ export const TherapistBookings = () => {
             </Card>
           ) : (
             <div className="space-y-4">
-              {bookingRequests.map((request) => (
-                <BookingRequestCard
-                  key={request.id}
-                  bookingRequest={request}
-                  userRole="therapist"
-                  onUpdate={handleUpdate}
-                />
+              {pendingRequests.map((request) => (
+                <Card key={request.id}>
+                  <CardHeader>
+                    <CardTitle>
+                      {request.client?.full_name || "Unknown Client"}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p>Email: {request.client?.email || "N/A"}</p>
+                    <p>Status: {request.status}</p>
+                  </CardContent>
+                </Card>
               ))}
             </div>
           )}
         </TabsContent>
 
+        {/* Appointments */}
         <TabsContent value="appointments" className="space-y-6">
           {isLoading ? (
             <div className="space-y-4">
@@ -274,7 +258,9 @@ export const TherapistBookings = () => {
                 <Card key={appointment.id}>
                   <CardHeader>
                     <CardTitle className="flex items-center justify-between">
-                      <span>Session with {appointment.profiles.full_name}</span>
+                      <span>
+                        Session with {appointment.client?.full_name || "Unknown Client"}
+                      </span>
                       <span className="text-sm font-normal text-muted-foreground">
                         {appointment.status}
                       </span>
@@ -283,13 +269,29 @@ export const TherapistBookings = () => {
                   <CardContent>
                     <div className="space-y-4">
                       <div className="grid grid-cols-2 gap-4">
-                        <p><strong>Date:</strong> {new Date(appointment.start_time).toLocaleDateString()}</p>
-                        <p><strong>Time:</strong> {new Date(appointment.start_time).toLocaleTimeString()}</p>
-                        <p><strong>Type:</strong> {appointment.session_type}</p>
-                        <p><strong>Duration:</strong> {Math.round((new Date(appointment.end_time).getTime() - new Date(appointment.start_time).getTime()) / (1000 * 60))} minutes</p>
+                        <p>
+                          <strong>Date:</strong>{" "}
+                          {new Date(appointment.start_time).toLocaleDateString()}
+                        </p>
+                        <p>
+                          <strong>Time:</strong>{" "}
+                          {new Date(appointment.start_time).toLocaleTimeString()}
+                        </p>
+                        <p>
+                          <strong>Type:</strong> {appointment.session_type}
+                        </p>
+                        <p>
+                          <strong>Duration:</strong>{" "}
+                          {Math.round(
+                            (new Date(appointment.end_time).getTime() -
+                              new Date(appointment.start_time).getTime()) /
+                              (1000 * 60)
+                          )}{" "}
+                          minutes
+                        </p>
                       </div>
-                      
-                      {appointment.status === 'scheduled' && (
+
+                      {appointment.status === "scheduled" && (
                         <div className="flex gap-2 pt-4">
                           <button
                             onClick={() => handleCancelAppointment(appointment.id)}

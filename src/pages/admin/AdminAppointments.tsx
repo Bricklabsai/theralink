@@ -240,8 +240,8 @@ const AdminAppointments = () => {
 
   const getStatusBadge = (status: string) => {
     switch(status) {
-      case 'scheduled':
-        return <Badge className="bg-blue-100 text-blue-800 border-blue-200">Scheduled</Badge>;
+      case 'Confirmed':
+        return <Badge className="bg-blue-100 text-blue-800 border-blue-200">Confirmed</Badge>;
       case 'completed':
         return <Badge className="bg-green-100 text-green-800 border-green-200">Completed</Badge>;
       case 'cancelled':
@@ -293,7 +293,7 @@ const AdminAppointments = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="scheduled">Scheduled</SelectItem>
+              <SelectItem value="scheduled">Confirmed</SelectItem>
               <SelectItem value="completed">Completed</SelectItem>
               <SelectItem value="cancelled">Cancelled</SelectItem>
               <SelectItem value="no-show">No Show</SelectItem>
@@ -547,11 +547,11 @@ const AdminAppointments = () => {
                 <div className="space-y-2">
                   <Label htmlFor="status">Status</Label>
                   <Select value={editStatus} onValueChange={setEditStatus}>
-                    <SelectTrigger id="status">
+                    <SelectTrigger id="status">e
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="scheduled">Scheduled</SelectItem>
+                      <SelectItem value="Confirmed">Confirmed</SelectItem>
                       <SelectItem value="completed">Completed</SelectItem>
                       <SelectItem value="cancelled">Cancelled</SelectItem>
                       <SelectItem value="no-show">No Show</SelectItem>
