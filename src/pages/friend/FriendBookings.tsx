@@ -31,7 +31,7 @@ export default function FriendBookings() {
         .from("booking_requests")
         .select("*")
         .eq("therapist_id", user.id)
-        .order("start_time", { ascending: false });
+        .order("requested_time", { ascending: false });
 
       if (bookingsError) throw bookingsError;
       if (!bookings || bookings.length === 0) return [];
@@ -97,7 +97,7 @@ export default function FriendBookings() {
                   <div className="text-sm text-muted-foreground">{appt.client?.email}</div>
                   <div className="text-sm text-muted-foreground flex items-center gap-2 mt-2">
                     <Clock className="h-4 w-4" />
-                    <span>{formatDate(appt.start_time)}</span>
+                    <span>{formatDate(appt.requested_date)}</span>
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-2 self-stretch justify-between">

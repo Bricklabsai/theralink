@@ -64,7 +64,7 @@ const FriendDashboard = () => {
       if (!user?.id) return { notesCount: 0 };
       
       const { data } = await supabase
-        .from('session_notes')
+        .from('booking_notes')
         .select('*')
         .eq('therapist_id', user.id);
       

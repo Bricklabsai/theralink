@@ -8,52 +8,99 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const FriendNotes = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
-  const [searchQuery, setSearchQuery] = useState("");
-  const [noteContent, setNoteContent] = useState("");
-  const [clientId, setClientId] = useState(""); // Could be selected from your client list
 
-  // Fetch notes for this therapist
-  const { data: notes = [], isLoading } = useQuery({
-    queryKey: ["notes", user?.id],
+  const [searchQuery, setSearchQuery] = useState("");
+  const [noteTitle, setNoteTitle] = useState("");
+  const [noteContent, setNoteContent] = useState("");
+  const [bookingRequestId, setBookingRequestId] = useState("");
+
+  // ✅ fetch therapist’s booking requests
+  const { data: bookingRequests = [] } = useQuery({
+    queryKey: ["booking_requests", user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
       const { data, error } = await supabase
-        .from("session_notes")
-        .select("*")
+        .from("booking_requests")
+        .select("id, requested_date, client_id")
         .eq("therapist_id", user.id)
-        .order("created_at", { ascending: false });
+        .order("requested_date", { ascending: false });
       if (error) throw error;
       return data;
     },
     enabled: !!user?.id,
   });
 
-  // Add note mutation
+  // ✅ fetch therapist’s notes
+  const { data: notes = [], isLoading } = useQuery({
+    queryKey: ["booking_notes", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+    const { data, error } = await (supabase as any)
+  .from("booking_notes")
+  .select("*")
+  .eq("therapist_id", user.id)
+  .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  // ✅ add note mutation
   const addNoteMutation = useMutation({
     mutationFn: async () => {
-      if (!user?.id || !noteContent.trim() || !clientId) {
-        throw new Error("Missing content or client");
+      if (!user?.id || !noteContent.trim() || !bookingRequestId) {
+        throw new Error("Missing title, content, or booking request");
       }
-      const { error } = await supabase.from("session_notes").insert([
+
+      // fetch client_id from the booking_requests table
+      const { data: booking, error: bookingError } = await supabase
+        .from("booking_requests")
+        .select("client_id")
+        .eq("id", bookingRequestId)
+        .single();
+
+      if (bookingError) throw bookingError;
+
+      const { error } = await (supabase as any).from("booking_notes").insert([
         {
           therapist_id: user.id,
-          client_id: clientId,
+          client_id: booking.client_id, // ✅ add client_id
+          booking_request_id: bookingRequestId, // ✅ correct field
+          title: noteTitle.trim(),
           content: noteContent.trim(),
         },
       ]);
+
       if (error) throw error;
     },
     onSuccess: () => {
       toast({ title: "Note saved successfully" });
+      setNoteTitle("");
       setNoteContent("");
-      queryClient.invalidateQueries({ queryKey: ["notes", user?.id] });
+      setBookingRequestId("");
+      queryClient.invalidateQueries({ queryKey: ["booking_notes", user?.id] });
     },
     onError: (err: any) => {
       toast({
@@ -64,20 +111,23 @@ const FriendNotes = () => {
     },
   });
 
-  const filteredNotes = notes.filter(note =>
-    note.content.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredNotes = notes.filter(
+    (note) =>
+      note.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      note.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Session Notes</h2>
+          <h2 className="text-3xl font-bold tracking-tight">Booking Notes</h2>
           <p className="text-muted-foreground mt-2">
-            Keep track of your sessions and progress with clients.
+            Keep track of your notes for client booking requests.
           </p>
         </div>
-        
+
+        {/* ✅ Dialog for new note */}
         <Dialog>
           <DialogTrigger asChild>
             <Button className="flex items-center">
@@ -87,22 +137,45 @@ const FriendNotes = () => {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add New Note</DialogTitle>
+              <DialogTitle>Add New Booking Note</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
+              {/* Select Booking Request */}
+              <Select
+                value={bookingRequestId}
+                onValueChange={setBookingRequestId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select booking request" />
+                </SelectTrigger>
+                <SelectContent>
+                  {bookingRequests.map((req) => (
+                    <SelectItem key={req.id} value={req.id}>
+                      {`Request: ${req.id} — ${new Date(
+                        req.requested_date
+                      ).toLocaleString()}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Title */}
               <Input
-                placeholder="Client ID (link to a dropdown in production)"
-                value={clientId}
-                onChange={(e) => setClientId(e.target.value)}
+                placeholder="Note title"
+                value={noteTitle}
+                onChange={(e) => setNoteTitle(e.target.value)}
               />
+
+              {/* Content */}
               <Textarea
-                placeholder="Write your session note..."
+                placeholder="Write your note..."
                 value={noteContent}
                 onChange={(e) => setNoteContent(e.target.value)}
               />
+
               <Button
                 onClick={() => addNoteMutation.mutate()}
-                disabled={addNoteMutation.isLoading}
+                disabled={(addNoteMutation as any).isLoading}
               >
                 Save Note
               </Button>
@@ -111,6 +184,7 @@ const FriendNotes = () => {
         </Dialog>
       </div>
 
+      {/* Search + Notes Display */}
       <Card>
         <CardHeader>
           <CardTitle>Find Notes</CardTitle>
@@ -141,7 +215,8 @@ const FriendNotes = () => {
           </div>
           <h3 className="mt-4 text-lg font-medium">No notes yet</h3>
           <p className="text-muted-foreground text-center mt-2 max-w-sm">
-            You haven't created any session notes yet. Start by creating a new note for one of your sessions.
+            You haven't created any booking notes yet. Start by creating one for
+            a client request.
           </p>
         </div>
       ) : (
@@ -149,11 +224,14 @@ const FriendNotes = () => {
           {filteredNotes.map((note) => (
             <Card key={note.id}>
               <CardHeader>
-                <CardTitle>Client: {note.client_id}</CardTitle>
+                <CardTitle>{note.title}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p>{note.content}</p>
-                <p className="text-xs text-muted-foreground mt-2">
+                {/* <p className="text-xs text-muted-foreground mt-2">
+                  Request ID: {note.booking_request_id}
+                </p> */}
+                <p className="text-xs text-muted-foreground mt-1">
                   {new Date(note.created_at).toLocaleString()}
                 </p>
               </CardContent>

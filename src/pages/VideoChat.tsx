@@ -26,7 +26,7 @@ const VideoCallPage = () => {
       await new Promise(resolve => setTimeout(resolve, 500)); // show loading briefly
       const domain = 'meet.jit.si';
       const roomName = `TheraLink-${therapistId || 'Guest'}-${Date.now()}`;
-      const generatedLink = `https://${domain}/${roomName}`;
+      const generatedLink = `https://${domain}`;
 
       setMeetingLink(generatedLink);
       setPendingRoomName(roomName);
