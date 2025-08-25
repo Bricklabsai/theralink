@@ -55,11 +55,11 @@ const FriendNotes = () => {
     queryKey: ["booking_notes", user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-    const { data, error } = await (supabase as any)
-  .from("booking_notes")
-  .select("*")
-  .eq("therapist_id", user.id)
-  .order("created_at", { ascending: false });
+    const { data, error } = await supabase
+      .from("booking_notes")
+      .select("*")
+      .eq("therapist_id", user.id)
+      .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data;
@@ -83,7 +83,7 @@ const FriendNotes = () => {
 
       if (bookingError) throw bookingError;
 
-      const { error } = await (supabase as any).from("booking_notes").insert([
+      const { error } = await supabase.from("booking_notes").insert([
         {
           therapist_id: user.id,
           client_id: booking.client_id, // ✅ add client_id
@@ -102,7 +102,7 @@ const FriendNotes = () => {
       setBookingRequestId("");
       queryClient.invalidateQueries({ queryKey: ["booking_notes", user?.id] });
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       toast({
         title: "Error saving note",
         description: err.message,
@@ -119,10 +119,10 @@ const FriendNotes = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Booking Notes</h2>
-          <p className="text-muted-foreground mt-2">
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Booking Notes</h2>
+          <p className="text-muted-foreground mt-1 sm:mt-2 text-sm sm:text-base">
             Keep track of your notes for client booking requests.
           </p>
         </div>
@@ -130,14 +130,14 @@ const FriendNotes = () => {
         {/* ✅ Dialog for new note */}
         <Dialog>
           <DialogTrigger asChild>
-            <Button className="flex items-center">
+            <Button className="flex items-center w-full sm:w-auto">
               <Plus className="mr-1 h-4 w-4" />
               New Note
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Add New Booking Note</DialogTitle>
+              <DialogTitle className="text-lg sm:text-xl">Add New Booking Note</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               {/* Select Booking Request */}
@@ -145,12 +145,12 @@ const FriendNotes = () => {
                 value={bookingRequestId}
                 onValueChange={setBookingRequestId}
               >
-                <SelectTrigger>
+                <SelectTrigger className="text-sm sm:text-base">
                   <SelectValue placeholder="Select booking request" />
                 </SelectTrigger>
                 <SelectContent>
                   {bookingRequests.map((req) => (
-                    <SelectItem key={req.id} value={req.id}>
+                    <SelectItem key={req.id} value={req.id} className="text-sm sm:text-base">
                       {`Request: ${req.id} — ${new Date(
                         req.requested_date
                       ).toLocaleString()}`}
@@ -164,6 +164,7 @@ const FriendNotes = () => {
                 placeholder="Note title"
                 value={noteTitle}
                 onChange={(e) => setNoteTitle(e.target.value)}
+                className="text-sm sm:text-base"
               />
 
               {/* Content */}
@@ -171,11 +172,13 @@ const FriendNotes = () => {
                 placeholder="Write your note..."
                 value={noteContent}
                 onChange={(e) => setNoteContent(e.target.value)}
+                className="text-sm sm:text-base min-h-[100px]"
               />
 
               <Button
                 onClick={() => addNoteMutation.mutate()}
-                disabled={(addNoteMutation as any).isLoading}
+                disabled={addNoteMutation.isPending}
+                className="w-full sm:w-auto"
               >
                 Save Note
               </Button>
@@ -186,52 +189,53 @@ const FriendNotes = () => {
 
       {/* Search + Notes Display */}
       <Card>
-        <CardHeader>
-          <CardTitle>Find Notes</CardTitle>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg sm:text-xl">Find Notes</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center space-x-2">
-            <div className="relative flex-1">
+          <div className="flex flex-col sm:flex-row items-center gap-2">
+            <div className="relative flex-1 w-full">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 type="search"
                 placeholder="Search notes..."
-                className="pl-8"
+                className="pl-8 text-sm sm:text-base"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <Button>Search</Button>
+            <Button className="w-full sm:w-auto mt-2 sm:mt-0">Search</Button>
           </div>
         </CardContent>
       </Card>
 
       {isLoading ? (
-        <div>Loading notes...</div>
+        <div className="flex justify-center p-6 text-muted-foreground">
+          Loading notes...
+        </div>
       ) : filteredNotes.length === 0 ? (
-        <div className="flex flex-col items-center justify-center border rounded-lg p-12 bg-muted/40">
-          <div className="rounded-full bg-primary/10 p-4">
-            <FileText className="h-8 w-8 text-primary" />
+        <div className="flex flex-col items-center justify-center border rounded-lg p-6 sm:p-12 bg-muted/40">
+          <div className="rounded-full bg-primary/10 p-3 sm:p-4">
+            <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
           </div>
-          <h3 className="mt-4 text-lg font-medium">No notes yet</h3>
-          <p className="text-muted-foreground text-center mt-2 max-w-sm">
+          <h3 className="mt-3 text-base sm:text-lg font-medium">No notes yet</h3>
+          <p className="text-muted-foreground text-center mt-1 text-xs sm:text-sm max-w-sm">
             You haven't created any booking notes yet. Start by creating one for
             a client request.
           </p>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {filteredNotes.map((note) => (
-            <Card key={note.id}>
-              <CardHeader>
-                <CardTitle>{note.title}</CardTitle>
+            <Card key={note.id} className="h-full">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base sm:text-lg line-clamp-2">
+                  {note.title}
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <p>{note.content}</p>
-                {/* <p className="text-xs text-muted-foreground mt-2">
-                  Request ID: {note.booking_request_id}
-                </p> */}
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-sm sm:text-base line-clamp-4">{note.content}</p>
+                <p className="text-xs text-muted-foreground mt-2">
                   {new Date(note.created_at).toLocaleString()}
                 </p>
               </CardContent>

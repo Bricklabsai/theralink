@@ -206,6 +206,61 @@ export type Database = {
         }
         Relationships: []
       }
+      booking_notes: {
+        Row: {
+          booking_request_id: string | null
+          client_id: string | null
+          content: string
+          created_at: string
+          id: string
+          therapist_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          booking_request_id?: string | null
+          client_id?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          therapist_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          booking_request_id?: string | null
+          client_id?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          therapist_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_notes_booking_request_id_fkey"
+            columns: ["booking_request_id"]
+            isOneToOne: false
+            referencedRelation: "booking_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_notes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_notes_therapist_id_fkey"
+            columns: ["therapist_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_messages: {
         Row: {
           created_at: string

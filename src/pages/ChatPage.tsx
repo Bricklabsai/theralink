@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { Json } from "@/integrations/supabase/types"; // Importing Json type
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -25,6 +26,40 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
+interface Message {
+  id: string;
+  sender_id: string;
+  receiver_id: string;
+  content: string;
+  created_at: string;
+  is_read: boolean | null;
+}
+
+interface Profile {
+  id: string;
+  application_status: string | null;
+  availability: Json | null;
+  bio: string | null;
+  created_at: string | null;
+  education: string | null;
+  has_insurance: boolean | null;
+  hourly_rate: number | null;
+  insurance_info: string | null;
+  is_community_therapist: boolean | null;
+  is_verified: boolean | null;
+  languages: string[] | null;
+  license_number: string | null;
+  license_type: string | null;
+  name?: string; // Added for UI display
+  preferred_currency: string | null;
+  rating: number | null;
+  session_formats: string[] | null;
+  specialization: string | null;
+  status?: string; // Added for UI display
+  therapy_approaches: string[] | null;
+  updated_at: string | null;
+  years_experience: number | null;
+}
 
 const formatMessageDate = (timestamp: string) => {
   const date = new Date(timestamp);
@@ -47,8 +82,8 @@ const formatMessageDate = (timestamp: string) => {
 const ChatPage = () => {
   const { therapistId } = useParams<{ therapistId: string }>();
   const { user } = useAuth();
-  const [therapist, setTherapist] = useState<any | null>(null);
-  const [messages, setMessages] = useState<any[]>([]);
+  const [therapist, setTherapist] = useState<Profile | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -58,6 +93,7 @@ const ChatPage = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
+        // First get therapist details
         const { data: therapistData, error: therapistError } = await supabase
           .from("therapists")
           .select("*")
@@ -65,7 +101,26 @@ const ChatPage = () => {
           .single();
 
         if (therapistError) throw therapistError;
-        setTherapist(therapistData);
+
+        // Then get profile details for the name
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("full_name, role")
+          .eq("id", therapistId)
+          .single();
+
+        if (profileError) {
+          console.error("Error fetching profile:", profileError);
+        }
+
+        // Combine the data
+        const combinedData = {
+          ...therapistData,
+          name: profileData?.full_name || "Therapist",
+          status: profileData?.role || "Unknown"
+        };
+
+        setTherapist(combinedData);
 
         const { data: messageData, error: messageError } = await supabase
           .from("messages")
@@ -73,7 +128,7 @@ const ChatPage = () => {
           .or(
             `and(sender_id.eq.${user?.id},receiver_id.eq.${therapistId}),and(sender_id.eq.${therapistId},receiver_id.eq.${user?.id})`
           )
-          .order("timestamp", { ascending: true });
+          .order("created_at", { ascending: true });
 
         if (messageError) throw messageError;
         setMessages(messageData);
@@ -99,7 +154,7 @@ const ChatPage = () => {
       sender_id: user?.id,
       receiver_id: therapistId,
       content: inputMessage,
-      timestamp: new Date().toISOString(),
+      created_at: new Date().toISOString(),
     };
 
     const { data, error } = await supabase
@@ -209,7 +264,7 @@ const ChatPage = () => {
                   >
                     <p>{msg.content}</p>
                     <div className="text-xs text-right mt-1 text-muted-foreground">
-                      {formatMessageDate(msg.timestamp)}
+                      {formatMessageDate(msg.created_at)}
                     </div>
                   </div>
                 </div>
