@@ -4,7 +4,7 @@ import FriendProfileForm from "@/components/friend/FriendProfileForm";
 
 export default function FriendAccount() {
   return (
-    <div className="space-y-8">
+<div className="space-y-8 mx-auto max-w-7xl">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Account Settings</h1>
         <p className="text-muted-foreground">Manage your profile and account settings.</p>

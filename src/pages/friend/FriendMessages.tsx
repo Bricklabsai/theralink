@@ -11,6 +11,15 @@ import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
+interface Message {
+  id: string;
+  sender_id: string;
+  receiver_id: string;
+  content: string;
+  created_at: string;
+  is_read: boolean;
+}
+
 
 
  const FriendMessages = () => {
@@ -114,7 +123,7 @@ const clients = Array.isArray(clientsRaw) ? clientsRaw : [];
   const selectedClient = clients.find(c => c.id === selectedClientId);
 
   return (
-    <div className="flex h-[calc(100vh-100px)] gap-4">
+<div className="flex h-[calc(100vh-100px)] gap-4 mx-auto max-w-7xl">
       {/* Client List Sidebar */}
       <div className="w-1/3 border-r">
         <Card className="h-full">
@@ -194,7 +203,7 @@ const clients = Array.isArray(clientsRaw) ? clientsRaw : [];
                     No messages yet. Start a conversation!
                   </div>
                 ) : (
-                  messages.map((msg: any) => (
+                  messages.map((msg: Message) => (
                     <div
                       key={msg.id}
                       className={`flex ${msg.sender_id === user.id ? "justify-end" : "justify-start"}`}

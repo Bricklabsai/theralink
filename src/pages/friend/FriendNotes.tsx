@@ -118,7 +118,7 @@ const FriendNotes = () => {
   );
 
   return (
-    <div className="space-y-6">
+<div className="space-y-6 mx-auto max-w-7xl">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Booking Notes</h2>
@@ -214,7 +214,7 @@ const FriendNotes = () => {
           Loading notes...
         </div>
       ) : filteredNotes.length === 0 ? (
-        <div className="flex flex-col items-center justify-center border rounded-lg p-6 sm:p-12 bg-muted/40">
+        <div className="flex flex-row items-center justify-center border rounded-lg p-6 sm:p-12 bg-muted/40">
           <div className="rounded-full bg-primary/10 p-3 sm:p-4">
             <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
           </div>

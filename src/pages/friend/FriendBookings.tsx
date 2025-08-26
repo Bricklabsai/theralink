@@ -66,7 +66,7 @@ export default function FriendBookings() {
   };
 
   return (
-    <div className="space-y-6">
+<div className="flex flex-col items-start space-y-6 mx-auto max-w-7xl">
       <div>
         <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">My Bookings</h2>
         <p className="text-muted-foreground mt-1 sm:mt-2 text-sm sm:text-base">
