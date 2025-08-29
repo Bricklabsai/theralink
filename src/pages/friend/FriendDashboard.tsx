@@ -74,7 +74,7 @@ const FriendDashboard = () => {
   });
 
   return (
-<div className="flex flex-col items-center space-y-6 mx-auto max-w-7xl">
+    <div className="container mx-auto px-4 py-6 animate-fade-in">
       {/* Welcome Banner */}
       <div className="relative w-full py-6 md:py-8 bg-gradient-to-br from-[#d9dbe7] to-[#ecf0fc] rounded-xl overflow-hidden shadow-md border border-border/30 mb-6">
         <div className="absolute inset-0 bg-dot-pattern pointer-events-none" />

@@ -51,7 +51,7 @@ export default function FriendSettings() {
   };
 
   return (
-<div className="space-y-8 mx-auto max-w-7xl">
+    <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
         <p className="text-muted-foreground">
