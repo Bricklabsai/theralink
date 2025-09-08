@@ -226,7 +226,7 @@ const onSubmit = async (values: z.infer<typeof formSchema>) => {
                 </div>
                 <div>
                   <p className="font-semibold text-gray-700">Email</p>
-                  <p className="text-gray-600">support@bricklabsai.org</p>
+                  <p className="text-gray-600">help@trytherabot.com</p>
                   <p className="text-sm text-gray-500">We'll respond as soon as possible</p>
                 </div>
               </div>

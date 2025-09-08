@@ -43,6 +43,40 @@ const HowItWorks = () => {
           </div>
         </div>
       </section>
+
+      {/* Launch Video Section */}
+      
+<section className="mb-24 px-4">
+  {/* Heading */}
+  <div className="text-center mb-12">
+
+    <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+      Watch our launch video to see how TheraLink makes mental health support
+      accessible and seamless.
+    </p>
+  </div>
+
+  {/* Video Container */}
+  <div className="max-w-4xl mx-auto">
+    <div className="relative w-full overflow-hidden rounded-3xl shadow-2xl border border-primary/20 group">
+      {/* Hover effect glow */}
+      <div className="absolute inset-0 bg-gradient-to-tr from-primary/10 via-transparent to-primary/10 opacity-0 group-hover:opacity-100 transition duration-500 pointer-events-none"></div>
+
+      {/* Responsive video */}
+      <div className="aspect-video">
+        <iframe
+          src="https://www.youtube.com/embed/xspT_J_b7Uo"
+          title="TheraLink Launch Video"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          className="w-full h-full rounded-3xl"
+        ></iframe>
+      </div>
+    </div>
+  </div>
+</section>
+
+
       
       {/* Step-by-Step Process */}
       <section className="mb-20">
@@ -325,7 +359,7 @@ const HowItWorks = () => {
             <Button asChild size="lg" variant="secondary" className="bg-white text-primary hover:bg-white/90">
               <Link to="/therapists">Find a Therapist</Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
+            <Button asChild size="lg" variant="outline" className="border-white text-primary hover:bg-white/10">
               <Link to="/auth/register">Create an Account</Link>
             </Button>
           </div>

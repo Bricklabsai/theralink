@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -11,8 +10,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 const AdminLogin = () => {
-  const [email, setEmail] = useState("admin@theralink.com");
-  const [password, setPassword] = useState("TheraLink2025!");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSettingUpAdmin, setIsSettingUpAdmin] = useState(false);
@@ -43,7 +42,7 @@ const AdminLogin = () => {
       } else {
         throw new Error(data?.error || "Unknown error occurred");
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Admin setup error:", error);
       toast({
         title: "Setup Failed",
@@ -55,7 +54,7 @@ const AdminLogin = () => {
     }
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     
@@ -63,7 +62,6 @@ const AdminLogin = () => {
       const { error } = await signIn(email, password);
       
       if (!error) {
-        // Check if the user is an admin
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('role')
@@ -76,7 +74,6 @@ const AdminLogin = () => {
             description: "Could not verify admin privileges",
             variant: "destructive",
           });
-          // Sign out if not an admin
           await supabase.auth.signOut();
           setIsLoading(false);
           return;
@@ -94,18 +91,16 @@ const AdminLogin = () => {
             description: "You do not have admin privileges",
             variant: "destructive",
           });
-          // Sign out if not an admin
           await supabase.auth.signOut();
         }
       } else {
-        // If login fails, suggest setting up admin
         toast({
           title: "Login failed",
           description: "Invalid credentials. Try setting up the admin user first.",
           variant: "destructive",
         });
       }
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Login error",
         description: error.message || "An error occurred during login",
@@ -135,7 +130,6 @@ const AdminLogin = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {/* Admin Setup Section */}
             <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
               <div className="flex items-center mb-2">
                 <Settings className="h-4 w-4 text-yellow-600 mr-2" />
@@ -162,7 +156,7 @@ const AdminLogin = () => {
                 <Input 
                   id="email" 
                   type="email" 
-                  placeholder="admin@theralink.com"
+                  placeholder="Enter admin email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -175,7 +169,7 @@ const AdminLogin = () => {
                   <Input 
                     id="password" 
                     type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
+                    placeholder="Enter password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required

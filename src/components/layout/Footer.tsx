@@ -25,10 +25,11 @@ const Footer = () => {
             {/* Social Media Links */}
             <div className="flex space-x-4">
               {[
-                { icon: Facebook, url: "https://facebook.com/theralink" },
-                { icon: Twitter, url: "https://twitter.com/theralink" },
-                { icon: Instagram, url: "https://instagram.com/theralink" },
-                { icon: Linkedin, url: "https://linkedin.com/company/theralink" }
+                { icon: Facebook, url: "https://www.facebook.com/profile.php?id=61559262162390 " },
+                { icon: Twitter, url: "https://x.com/TherabotAi?t=tK4ML3BxCfzpvMkDWfwLHQ&s=09" },
+                { icon: Instagram, url: "https://www.instagram.com/therabotai?igsh=d3Y5Z3o1aWJwd2h6 " },
+                { icon: Linkedin, url: "https://www.linkedin.com/company/bricklabsai/ " }
+                
               ].map((social, index) => (
                 <a 
                   key={index}
@@ -100,7 +101,7 @@ const Footer = () => {
                 href="mailto:support@theralink.com" 
                 className="text-gray-700 hover:text-thera-600 transition-colors text-sm font-medium"
               >
-                support@bricklabsai.org
+                help@trytherabot.com
               </a>
             </div>
             <div className="text-gray-600 text-sm bg-white px-4 py-2 rounded-lg shadow-sm">
